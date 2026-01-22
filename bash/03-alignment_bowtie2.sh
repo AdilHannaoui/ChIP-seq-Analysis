@@ -5,7 +5,7 @@ set -euo pipefail
 # Output: Sorted and indexed BAM files + BedGraph coverage tracks.
 # Author: Adil Hannaoui Anaaoui
 
-WORKDIR="/mnt/c/Users/rna-seq"
+WORKDIR="/mnt/c/Users/rip-seq"
 BOWTIE2_INDEX="$WORKDIR/BOWTIE2/cerevisiae/index/genome"
 OUTPUT_DIR="$WORKDIR/output"
 FASTQ_DIR="$OUTPUT_DIR/fastq_trimmed"
