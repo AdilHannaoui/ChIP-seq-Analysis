@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# Purpose: Align trimmed RNA-seq reads to the Saccharomyces cerevisiae genome using Bowtie2.
+# Purpose: Align trimmed RIP-seq reads to the Saccharomyces cerevisiae genome using Bowtie2.
 # Output: Sorted and indexed BAM files + BedGraph coverage tracks.
 # Author: Adil Hannaoui Anaaoui
 
