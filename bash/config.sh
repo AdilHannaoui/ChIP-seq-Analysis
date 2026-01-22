@@ -25,7 +25,7 @@ TRIMMO_JAR="$WORKDIR/Trimmomatic-0.39/trimmomatic-0.39.jar"
 TRIMMOMATIC_ADAPTERS="$WORKDIR/Trimmomatic-0.39/adapters/TruSeq3-SE.fa"
 
 # BOWTIE2
-HISAT2_INDEX="$WORKDIR/Bowtie2/cerevisiae/index/genome"
+HISAT2_INDEX="$WORKDIR/BOWTIE2/cerevisiae/index/genome"
 
 # ----------------------
 # Output subdirectories
