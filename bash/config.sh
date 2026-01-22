@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # ==================================================
-# Global configuration file for RNA-seq pipeline
+# Global configuration file for RIP-seq pipeline
 # ==================================================
 
 # ----------------------
 # Project directories
 # ----------------------
-WORKDIR="/mnt/c/Users/rna-seq"
+WORKDIR="/mnt/c/Users/rip-seq"
 FASTQ_DIR="$WORKDIR/data"
 OUTPUT_DIR="$WORKDIR/output"
 
