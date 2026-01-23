@@ -1,0 +1,46 @@
+# ==========================
+# RIP-seq Analysis Config
+# Author: Adil Hannaoui Anaaoui
+# ==========================
+
+# --------------------------
+# Project structure
+# --------------------------
+PROJECT_ROOT <- getwd()
+
+DATA_DIR <- file.path(PROJECT_ROOT, "data")
+OUTPUT_DIR <- file.path(PROJECT_ROOT, "output")
+COUNTS_MATRIX_PATH <- "output/common_counts.txt"
+SAMPLE_METADATA_PATH <- "output/colData.rds"
+PLOTS_DIR <- file.path(OUTPUT_DIR, "plots")
+
+CONDITIONS <- c(
+  rep("Rpb4-S/T-A_IN", 3),
+  rep("Rpb4-S/T-A_IP", 3),
+  rep("Rpb4-S/T-D_IN", 3),
+  rep("Rpb4-S/T-D_IP", 3),
+  rep("WT_IN", 3),
+  rep("WT_IP", 3)
+)
+
+REFERENCE_CONDITION <- "IN"
+
+# --------------------------
+# DESeq2 parameters
+# --------------------------
+PADJ_THRESHOLD <- 0.05
+LOG2FC_THRESHOLD <- 1
+MIN_COUNTS_FILTER <- 10
+
+# --------------------------
+# Enrichment analysis
+# --------------------------
+GO_ONTOLOGY <- "BP" 
+PVAL_CUTOFF <- 0.05
+QVAL_CUTOFF <- 0.05
+
+# --------------------------
+# Organism database
+# --------------------------
+ORG_DB <- "org.Sc.sgd.db"
+GENE_ID_TYPE <- "ORF" 
