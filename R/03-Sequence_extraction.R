@@ -12,10 +12,8 @@ library(tidyverse)
 library(GenomicRanges)
 library(IRanges)
 library(Biostrings)
-library(BSgenome.Scerevisiae.UCSC.sacCer3)   # Ajusta si usas otro genoma
+library(BSgenome.Scerevisiae.UCSC.sacCer3)  
 
-# If GENOME_REFERENCE is an object, this works directly.
-# If it's a string, use genome <- get(GENOME_REFERENCE)
 genome <- REFERENCE_GENOME
 
 # --------------------------
