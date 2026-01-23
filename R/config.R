@@ -26,6 +26,7 @@ CONDITIONS <- c(
 REFERENCE_CONDITION <- "IN"
 
 REFERENCE_GENOME <- BSgenome.Scerevisiae.UCSC.sacCer3
+REFERENCE_TXDB <- TxDb.Scerevisiae.UCSC.sacCer3.sgdGene
 
 # --------------------------
 # DESeq2 parameters
