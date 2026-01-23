@@ -16,7 +16,7 @@ library(BSgenome.Scerevisiae.UCSC.sacCer3)   # Ajusta si usas otro genoma
 
 # If GENOME_REFERENCE is an object, this works directly.
 # If it's a string, use genome <- get(GENOME_REFERENCE)
-genome <- GENOME_REFERENCE
+genome <- REFERENCE_GENOME
 
 # --------------------------
 # Load annotated significant peaks (CSV)
