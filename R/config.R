@@ -46,5 +46,6 @@ PADJ_METHOD <- "BH"
 # --------------------------
 # Organism database
 # --------------------------
+organism <- "yeast"
 ORG_DB <- "org.Sc.sgd.db"
 GENE_ID_TYPE <- "ORF" 
