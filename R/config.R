@@ -41,6 +41,7 @@ MIN_COUNTS_FILTER <- 10
 GO_ONTOLOGY <- "BP" 
 PVAL_CUTOFF <- 0.05
 QVAL_CUTOFF <- 0.05
+PADJ_METHOD <- "BH"
 
 # --------------------------
 # Organism database
