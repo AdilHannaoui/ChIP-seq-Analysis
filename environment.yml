@@ -13,6 +13,40 @@ dependencies:
   - trimmomatic=0.39
   - bowtie2=2.4.4
   - subread=2.0.3
-  - samtools=1.13 
+  - samtools=1.13
   - bedtools=2.30.0
   - macs2=2.2.9.1
+
+  # MEME Suite (motif analysis)
+  - meme
+
+  # IGV (visualization snapshots)
+  - igv
+  - igvtools
+
+  # Bioconductor core
+  - bioconductor-deseq2
+  - bioconductor-chipseeker
+  - bioconductor-clusterprofiler
+  - bioconductor-reactomepa
+  - bioconductor-org.sc.sgd.db
+  - bioconductor-txdb.scerevisiae.ucsc.saccer3.sgdgene
+  - bioconductor-biostrings
+  - bioconductor-genomicranges
+  - bioconductor-bsgenome
+  - bioconductor-bsgenome.scerevisiae.ucsc.saccer3
+
+  # R packages (CRAN)
+  - r-tidyverse
+  - r-data.table
+  - r-enhancedvolcano
+  - r-pheatmap
+  - r-complexheatmap
+  - r-upsetr
+  - r-ggvenndiagram
+  - r-ggplot2
+  - r-ggrepel
+
+  # Optional utilities
+  - pigz
+  - parallel
