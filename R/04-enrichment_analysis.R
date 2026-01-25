@@ -94,21 +94,21 @@ ekegg_D <- enrichKEGG(
 # --------------------------
 ereact_WT <- enrichPathway(
   gene          = geneid_WT,
-  organism      = "yeast",
+  organism      = organism,
   pAdjustMethod = PADJ_METHOD,
   qvalueCutoff  = QVAL_CUTOFF
 )
 
 ereact_A <- enrichPathway(
   gene          = geneid_A,
-  organism      = "yeast",
+  organism      = organism,
   pAdjustMethod = PADJ_METHOD,
   qvalueCutoff  = QVAL_CUTOFF
 )
 
 ereact_D <- enrichPathway(
   gene          = geneid_D,
-  organism      = "yeast",
+  organism      = organism,
   pAdjustMethod = PADJ_METHOD,
   qvalueCutoff  = QVAL_CUTOFF
 )
