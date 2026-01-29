@@ -26,7 +26,7 @@ TRIMMO_JAR="$CONDA_PREFIX/share/trimmomatic/trimmomatic.jar"
 ADAPTERS="$CONDA_PREFIX/share/trimmomatic/adapters/TruSeq3-SE.fa"
 
 # BOWTIE2
-HISAT2_INDEX="$WORKDIR/BOWTIE2/cerevisiae/index/genome"
+BOWTIE2_INDEX="$WORKDIR/Bowtie2/cerevisiae/index/genome"
 
 # ----------------------
 # Output subdirectories
