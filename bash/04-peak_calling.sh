@@ -22,7 +22,7 @@ run_macs2() {
     REP="$2"
 
     BASENAME=$(basename "$IP_FILE")
-    SAMPLE_NAME=$(echo "$BASENAME" | sed -E "s/_[Ii][Pp]${REP}.*//")
+    SAMPLE_NAME=$(echo "$BASENAME" | sed -E "s/_[Ii][PNpn]${REP}.*//")
 
     # Find matching IN file
     IN_FILE=$(ls "$OUTPUT_DIR/bowtie2"/"${SAMPLE_NAME}"_[Ii][Nn]${REP}.bam 2>/dev/null || true)
