@@ -11,14 +11,13 @@ set -euo pipefail
 source "$(dirname "$0")/config.sh"
 
 cd "$WORKDIR"
-mkdir -p "$OUTPUT_DIR/fastq_trimmed"
 mkdir -p "$OUTPUT_DIR/fastqc_trimmed"
 
 for FASTQ_FILE in "$FASTQ_DIR"/*.fastq; do
     SAMPLE_NAME=$(basename "$FASTQ_FILE" .fastq)
     echo "Processing Sample: $SAMPLE_NAME"
 
-    TRIMMED_FASTQ_FILE="$OUTPUT_DIR/fastq_trimmed/${SAMPLE_NAME}_trimmed.fastq"
+    TRIMMED_FASTQ_FILE="$FASTQ_TRIM/${SAMPLE_NAME}_trimmed.fastq"
 
     # Run Trimmomatic
     java -jar "$TRIMMO_JAR" SE -threads "$THREADS" \
