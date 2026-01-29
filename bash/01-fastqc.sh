@@ -4,10 +4,7 @@ set -euo pipefail
 # Purpose: Perform quality control on raw RIP-seq FASTQ files using FastQC
 # Author: Adil Hannaoui Anaaoui
 
-WORKDIR="/mnt/c/Users/rip-seq/"
-FASTQ_DIR="$WORKDIR/data/"
-OUTPUT_DIR="$WORKDIR/output"
-THREADS=6
+source "$(dirname "$0")/config.sh"
 
 mkdir -p "$OUTPUT_DIR/fastqc_results"
 cd "$WORKDIR"
