@@ -8,7 +8,6 @@
 # --------------------------
 source("R/config.R")
 
-library(tidyverse)
 library(GenomicRanges)
 library(IRanges)
 library(Biostrings)
