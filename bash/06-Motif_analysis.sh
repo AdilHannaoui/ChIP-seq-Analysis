@@ -15,7 +15,6 @@ source "$(dirname "$0")/config.sh"
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_R="R/config.R"
 
-# Extraer OUTPUT_DIR desde config.R (opcional, si quieres mantener una sola fuente de verdad)
 OUTPUT_DIR=$(Rscript -e "source('${CONFIG_R}'); cat(OUTPUT_DIR)")
 
 FASTA_WT="${OUTPUT_DIR}/WT_peak_sequences.fasta"
@@ -25,7 +24,7 @@ FASTA_D="${OUTPUT_DIR}/D_peak_sequences.fasta"
 MOTIF_DIR="${OUTPUT_DIR}/motifs"
 mkdir -p "${MOTIF_DIR}"
 
-# Parámetros MEME/DREME/FIMO (ajústalos a tu gusto)
+# MEME/DREME/FIMO parameters
 NMOTIFS=10
 MEME_MINW=6
 MEME_MAXW=15
@@ -42,14 +41,14 @@ run_motif_pipeline () {
     echo ">>> Running motif analysis for ${label}"
     mkdir -p "${outdir}"
 
-    # 1) DREME: motivos cortos de novo
+    # 1) DREME: in novo short motifs
     dreme \
         -oc "${outdir}/dreme" \
         -p "${fasta}" \
         -dna \
         -norc
 
-    # 2) MEME: motivos más detallados
+    # 2) MEME: detailed motifs
     meme "${fasta}" \
         -oc "${outdir}/meme" \
         -dna \
@@ -59,7 +58,7 @@ run_motif_pipeline () {
         -maxw "${MEME_MAXW}" \
         -revcomp
 
-    # 3) FIMO: escanear motivos de MEME sobre las mismas secuencias
+    # 3) FIMO: MEME motifs scan
     fimo \
         --oc "${outdir}/fimo" \
         "${outdir}/meme/meme.xml" \
