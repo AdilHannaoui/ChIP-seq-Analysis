@@ -25,7 +25,7 @@ run_macs2() {
     SAMPLE_NAME=$(echo "$BASENAME" | sed -E "s/_[Ii][PNpn]${REP}.*//")
 
     # Find matching IN file
-    IN_FILE=$(ls "$OUTPUT_DIR/bowtie2"/"${SAMPLE_NAME}"_[Ii][Nn]${REP}.bam 2>/dev/null || true)
+    IN_FILE=$(ls "$OUTPUT_DIR/bowtie2"/"${SAMPLE_NAME}"_[Ii][Nn]${REP}*.bam 2>/dev/null || true)
 
     if [[ ! -f "$IN_FILE" ]]; then
         echo "ERROR: No IN file found for sample $SAMPLE_NAME (rep $REP)"
@@ -78,10 +78,9 @@ echo "Found ${#IP_LIST[@]} IP files for MACS2."
 # --------------------------
 echo "Running MACS2 peak calling in parallel using $THREADS threads..."
 
-parallel -j "$THREADS" \
-    run_macs2 {1} {2} \
-    ::: $(printf "%s\n" "${IP_LIST[@]}" | cut -d: -f1) \
-    ::: $(printf "%s\n" "${IP_LIST[@]}" | cut -d: -f2)
+parallel -j "$THREADS" --colsep ':' \
+    run_macs2 {1} {2} ::: "${IP_LIST[@]}"
+
 
 echo "All MACS2 peak calling completed."
 echo "Results saved in: $OUTPUT_DIR/macs2"
