@@ -4,9 +4,7 @@ set -euo pipefail
 # Purpose: Peak calling using MACS2 (robust IP/IN detection)
 # Author: Adil Hannaoui Anaaoui
 
-WORKDIR="/mnt/c/Users/rip-seq"
-OUTPUT_DIR="$WORKDIR/output"
-MAX_REPLICAS=3
+source("bash/config.sh")
 
 cd "$WORKDIR"
 
