@@ -18,7 +18,6 @@ library(circlize)
 library(UpSetR)
 library(clusterProfiler)
 library(org.Sc.sgd.db)
-library(tidyverse)
 library(ggplot2)
 
 # ==========================
