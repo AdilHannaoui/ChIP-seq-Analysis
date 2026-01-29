@@ -8,11 +8,7 @@
 
 set -euo pipefail
 
-WORKDIR="/mnt/c/Users/rip-seq/"
-TRIMMO_JAR="$WORKDIR/Trimmomatic-0.39/trimmomatic-0.39.jar"
-FASTQ_DIR="$WORKDIR/data/"
-OUTPUT_DIR="$WORKDIR/output/"
-THREADS=6
+source "$(dirname "$0")/config.sh"
 
 cd "$WORKDIR"
 mkdir -p "$OUTPUT_DIR/fastq_trimmed"
