@@ -14,15 +14,15 @@ OUTPUT_DIR="$WORKDIR/output"
 # ----------------------
 # Computational resources
 # ----------------------
-THREADS=6
+THREADS=8
 
 # ----------------------
 # Tools and references
 # ----------------------
 
 # Trimmomatic
-TRIMMO_JAR="$WORKDIR/Trimmomatic-0.39/trimmomatic-0.39.jar"
-TRIMMOMATIC_ADAPTERS="$WORKDIR/Trimmomatic-0.39/adapters/TruSeq3-SE.fa"
+TRIMMO_JAR="$CONDA_PREFIX/share/trimmomatic/trimmomatic.jar"
+ADAPTERS="$CONDA_PREFIX/share/trimmomatic/adapters/TruSeq3-SE.fa"
 
 # BOWTIE2
 HISAT2_INDEX="$WORKDIR/BOWTIE2/cerevisiae/index/genome"
