@@ -1,14 +1,11 @@
 #!/usr/bin/env bash
+set -euo pipefail
+
 # ==========================
-# RIP-seq IGV Batch Snapshot Module
+# RIP-seq IGV Batch Snapshot Module (parallel batch generation)
 # Author: Adil Hannaoui Anaaoui
 # ==========================
 
-set -euo pipefail
-
-# --------------------------
-# Load OUTPUT_DIR from config.R
-# --------------------------
 source "$(dirname "$0")/config.sh"
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_R="R/config.R"
@@ -16,9 +13,10 @@ CONFIG_R="R/config.R"
 OUTPUT_DIR=$(Rscript -e "source('${CONFIG_R}'); cat(OUTPUT_DIR)")
 SNAP_DIR="${OUTPUT_DIR}/igv_snapshots"
 mkdir -p "${SNAP_DIR}"
+mkdir -p "${OUTPUT_DIR}/logs"
 
 # --------------------------
-# Input files (adjust if needed)
+# Input files
 # --------------------------
 BAM_WT="${OUTPUT_DIR}/WT_aligned_sorted.bam"
 BAM_A="${OUTPUT_DIR}/A_aligned_sorted.bam"
@@ -31,45 +29,49 @@ PEAKS_D="${OUTPUT_DIR}/D_significant_peaks_with_coords.csv"
 GENOME="sacCer3"
 
 # --------------------------
-# Generate IGV batch script
+# Batch script
 # --------------------------
 BATCH_FILE="${SNAP_DIR}/igv_batch_script.igv"
 
-echo "new" > "${BATCH_FILE}"
-echo "genome ${GENOME}" >> "${BATCH_FILE}"
-
-echo "load ${BAM_WT}" >> "${BATCH_FILE}"
-echo "load ${BAM_A}" >> "${BATCH_FILE}"
-echo "load ${BAM_D}" >> "${BATCH_FILE}"
-
-echo "snapshotDirectory ${SNAP_DIR}" >> "${BATCH_FILE}"
+{
+    echo "new"
+    echo "genome ${GENOME}"
+    echo "load ${BAM_WT}"
+    echo "load ${BAM_A}"
+    echo "load ${BAM_D}"
+    echo "snapshotDirectory ${SNAP_DIR}"
+} > "${BATCH_FILE}"
 
 # --------------------------
-# Generate snapshots for each peak
+# Function to generate snapshot commands
 # --------------------------
-generate_snapshots () {
+generate_snapshot_lines() {
     local peaks_file="$1"
     local label="$2"
 
-    tail -n +2 "${peaks_file}" | while IFS=',' read -r chrom start end rest; do
+    tail -n +2 "$peaks_file" | while IFS=',' read -r chrom start end rest; do
         region="${chrom}:${start}-${end}"
-        snapshot_name="${label}_${chrom}_${start}_${end}.png"
-
-        echo "goto ${region}" >> "${BATCH_FILE}"
-        echo "snapshot ${snapshot_name}" >> "${BATCH_FILE}"
+        snapshot="${label}_${chrom}_${start}_${end}.png"
+        echo "goto ${region}"
+        echo "snapshot ${snapshot}"
     done
 }
 
-generate_snapshots "${PEAKS_WT}" "WT"
-generate_snapshots "${PEAKS_A}"  "A"
-generate_snapshots "${PEAKS_D}"  "D"
+export -f generate_snapshot_lines
+
+# --------------------------
+# Generate snapshot commands in parallel
+# --------------------------
+parallel -j "$THREADS" generate_snapshot_lines ::: \
+    "$PEAKS_WT" "$PEAKS_A" "$PEAKS_D" ::: \
+    "WT" "A" "D" >> "${BATCH_FILE}"
 
 echo "exit" >> "${BATCH_FILE}"
 
 # --------------------------
-# Run IGV in batch mode
+# Run IGV batch mode
 # --------------------------
 echo "Running IGV batch mode..."
-igv.sh -b "${BATCH_FILE}"
+igv.sh -b "${BATCH_FILE}" > "${OUTPUT_DIR}/logs/igv_batch.log" 2>&1
 
 echo "IGV snapshots saved in: ${SNAP_DIR}"
