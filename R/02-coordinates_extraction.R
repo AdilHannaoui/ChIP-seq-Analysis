@@ -8,7 +8,7 @@
 # --------------------------
 source("R/config.R")
 
-library(tidyverse)
+library(dplyr)
 
 # --------------------------
 # Load DESeq2 significant results
