@@ -9,8 +9,9 @@ set -euo pipefail
 # --------------------------
 # Load OUTPUT_DIR from config.R
 # --------------------------
+source "$(dirname "$0")/config.sh"
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_R="${PROJECT_DIR}/config.R"
+CONFIG_R="R/config.R"
 
 OUTPUT_DIR=$(Rscript -e "source('${CONFIG_R}'); cat(OUTPUT_DIR)")
 SNAP_DIR="${OUTPUT_DIR}/igv_snapshots"
