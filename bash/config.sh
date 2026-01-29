@@ -7,7 +7,7 @@
 # ----------------------
 # Project directories
 # ----------------------
-WORKDIR="/mnt/c/Users/rip-seq"
+WORKDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FASTQ_DIR="$WORKDIR/data"
 OUTPUT_DIR="$WORKDIR/output"
 
