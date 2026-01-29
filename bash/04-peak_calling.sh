@@ -60,7 +60,7 @@ export OUTPUT_DIR
 IP_LIST=()
 
 for REP in $(seq 1 "$MAX_REPLICAS"); do
-    for IP_FILE in "$OUTPUT_DIR/bowtie2"/*_[Ii][Pp]${REP}.bam; do
+    for IP_FILE in "$OUTPUT_DIR/bowtie2"/*_[Ii][Pp]${REP}*.bam; do
         [[ -e "$IP_FILE" ]] || continue
         IP_LIST+=("$IP_FILE:$REP")
     done
