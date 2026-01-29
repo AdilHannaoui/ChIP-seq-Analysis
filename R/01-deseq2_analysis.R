@@ -6,7 +6,7 @@
 # --------------------------
 # Load configuration
 # --------------------------
-source("config.R") 
+source("R/config.R") 
 
 library(DESeq2)
 library(tidyverse)
