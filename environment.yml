@@ -6,47 +6,46 @@ channels:
 
 dependencies:
   # Core system
-  - r-base=4.4.0
+  - r-base=4.4.1
 
   # Bioinformatics tools
-  - fastqc=0.11.9
+  - fastqc=0.12.1
   - trimmomatic=0.39
-  - bowtie2=2.4.4
-  - subread=2.0.3
-  - samtools=1.13
-  - bedtools=2.30.0
+  - bowtie2=2.5.4
+  - subread=2.0.6
+  - samtools=1.20
+  - bedtools=2.31.1
   - macs2=2.2.9.1
 
   # MEME Suite (motif analysis)
-  - meme
+  - meme=5.5.5
 
   # IGV (visualization snapshots)
-  - igv
-  - igvtools
+  - igv=2.16.2
+  - igvtools=2.17.0
 
-  # Bioconductor core
-  - bioconductor-deseq2
-  - bioconductor-chipseeker
-  - bioconductor-clusterprofiler
-  - bioconductor-reactomepa
-  - bioconductor-org.sc.sgd.db
-  - bioconductor-txdb.scerevisiae.ucsc.saccer3.sgdgene
-  - bioconductor-biostrings
-  - bioconductor-genomicranges
-  - bioconductor-bsgenome
-  - bioconductor-bsgenome.scerevisiae.ucsc.saccer3
+  # Bioconductor core (Bioc 3.19, compatible with R 4.4)
+  - bioconductor-deseq2=1.42.0
+  - bioconductor-chipseeker=1.38.0
+  - bioconductor-clusterprofiler=4.10.0
+  - bioconductor-reactomepa=1.46.0
+  - bioconductor-org.sc.sgd.db=3.19.0
+  - bioconductor-txdb.scerevisiae.ucsc.saccer3.sgdgene=3.19.0
+  - bioconductor-biostrings=2.70.1
+  - bioconductor-genomicranges=1.54.1
+  - bioconductor-bsgenome=1.70.1
+  - bioconductor-bsgenome.scerevisiae.ucsc.saccer3=1.4.0
 
   # R packages (CRAN)
-  - r-tidyverse
-  - r-data.table
-  - r-enhancedvolcano
-  - r-pheatmap
-  - r-complexheatmap
-  - r-upsetr
-  - r-ggvenndiagram
-  - r-ggplot2
-  - r-ggrepel
+  - r-enhancedvolcano=1.20.0
+  - r-pheatmap=1.0.12
+  - r-complexheatmap=2.18.0
+  - r-upsetr=1.4.0
+  - r-ggvenndiagram=1.2.0
+  - r-ggplot2=3.5.1
+  - r-ggrepel=0.9.6
 
   # Optional utilities
   - pigz
   - parallel
+
