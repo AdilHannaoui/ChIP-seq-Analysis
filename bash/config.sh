@@ -15,6 +15,7 @@ OUTPUT_DIR="$WORKDIR/output"
 # Computational resources
 # ----------------------
 THREADS=8
+MAX_REPLICAS=3
 
 # ----------------------
 # Tools and references
