@@ -9,7 +9,6 @@
 source("R/config.R") 
 
 library(DESeq2)
-library(tidyverse)
 
 # --------------------------
 # Load data
