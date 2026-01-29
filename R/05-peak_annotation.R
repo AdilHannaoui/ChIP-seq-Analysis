@@ -8,7 +8,6 @@
 # --------------------------
 source("config.R")
 
-library(tidyverse)
 library(GenomicRanges)
 library(ChIPseeker)
 library(TxDb.Scerevisiae.UCSC.sacCer3.sgdGene)
