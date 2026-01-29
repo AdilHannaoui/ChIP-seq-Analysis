@@ -4,9 +4,7 @@ set -euo pipefail
 # Purpose: Obtain intersection peaks across all replicates using bedtools multiinter
 # Author: Adil Hannaoui Anaaoui
 
-WORKDIR="/mnt/c/Users/rip-seq"
-OUTPUT_DIR="$WORKDIR/output"
-GTF_FILE="$WORKDIR/annotation/Saccharomyces_cerevisiae.R64-1-1.112.gtf"
+source "$(dirname "$0")/config.sh"
 
 mkdir -p "$OUTPUT_DIR/macs2" "$OUTPUT_DIR/logs"
 
