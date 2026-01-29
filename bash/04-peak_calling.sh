@@ -1,49 +1,88 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
-# Purpose: Peak calling using MACS2 (robust IP/IN detection)
+# ==========================
+# RIP-seq MACS2 Peak Calling (parallel)
 # Author: Adil Hannaoui Anaaoui
+# ==========================
 
-source("bash/config.sh")
+# Load global config
+source "$(dirname "$0")/config.sh"
+
+mkdir -p "$OUTPUT_DIR/macs2"
+mkdir -p "$OUTPUT_DIR/logs"
 
 cd "$WORKDIR"
 
-mkdir -p "$OUTPUT_DIR/macs2" \
-         "$OUTPUT_DIR/logs"
+# --------------------------
+# Function to run MACS2 for a single IP/IN pair
+# --------------------------
+run_macs2() {
+    IP_FILE="$1"
+    REP="$2"
+
+    BASENAME=$(basename "$IP_FILE")
+    SAMPLE_NAME=$(echo "$BASENAME" | sed -E "s/_[Ii][Pp]${REP}.*//")
+
+    # Find matching IN file
+    IN_FILE=$(ls "$OUTPUT_DIR/bowtie2"/"${SAMPLE_NAME}"_[Ii][Nn]${REP}.bam 2>/dev/null || true)
+
+    if [[ ! -f "$IN_FILE" ]]; then
+        echo "ERROR: No IN file found for sample $SAMPLE_NAME (rep $REP)"
+        return
+    fi
+
+    LOGFILE="$OUTPUT_DIR/logs/macs2_${SAMPLE_NAME}_rep${REP}.log"
+
+    echo ">>> Running MACS2 for $SAMPLE_NAME (rep $REP)"
+
+    macs2 callpeak \
+        -t "$IP_FILE" \
+        -c "$IN_FILE" \
+        --format BAM \
+        --name "$OUTPUT_DIR/macs2/${SAMPLE_NAME}_rep${REP}" \
+        --pvalue 0.1 \
+        --call-summits \
+        --nomodel \
+        --extsize 150 \
+        --gsize 1.2e7 \
+        > "$LOGFILE" 2>&1
+
+    echo ">>> Finished MACS2 for $SAMPLE_NAME (rep $REP)"
+}
+
+export -f run_macs2
+export OUTPUT_DIR
+
+# --------------------------
+# Build list of IP files for all replicates
+# --------------------------
+IP_LIST=()
 
 for REP in $(seq 1 "$MAX_REPLICAS"); do
-
-    # Detectar archivos IP con coincidencia insensible a mayúsculas
     for IP_FILE in "$OUTPUT_DIR/bowtie2"/*_[Ii][Pp]${REP}.bam; do
-        
-        [[ -e "$IP_FILE" ]] || continue  # Si no hay coincidencias, saltar
-
-        BASENAME=$(basename "$IP_FILE")
-        
-        # Eliminar el sufijo _IP1, _ip1, _Ip1, etc.
-        SAMPLE_NAME=$(echo "$BASENAME" | sed -E "s/_[Ii][Pp]${REP}.*//")
-
-        echo "Processing sample: $SAMPLE_NAME (rep $REP)"
-
-        # Buscar archivo IN correspondiente (IN, in, In, iN)
-        IN_FILE=$(ls "$OUTPUT_DIR/bowtie2"/"${SAMPLE_NAME}"_[Ii][Nn]${REP}.bam 2>/dev/null || true)
-
-        if [[ -f "$IN_FILE" ]]; then
-            
-            macs2 callpeak \
-                -t "$IP_FILE" \
-                -c "$IN_FILE" \
-                --format BAM \
-                --name "$OUTPUT_DIR/macs2/${SAMPLE_NAME}_rep${REP}" \
-                --pvalue 0.1 \
-                --call-summits \
-                --nomodel \
-                --extsize 150 \
-                --gsize 1.2e7 \
-                > "$OUTPUT_DIR/logs/narrowpeaks_${SAMPLE_NAME}_rep${REP}.log" 2>&1
-
-        else
-            echo "ERROR: No IN file found for sample $SAMPLE_NAME (rep $REP)"
-        fi
+        [[ -e "$IP_FILE" ]] || continue
+        IP_LIST+=("$IP_FILE:$REP")
     done
 done
+
+if [[ ${#IP_LIST[@]} -eq 0 ]]; then
+    echo "No IP files found for MACS2 peak calling."
+    exit 1
+fi
+
+echo "Found ${#IP_LIST[@]} IP files for MACS2."
+
+# --------------------------
+# Run MACS2 in parallel
+# --------------------------
+echo "Running MACS2 peak calling in parallel using $THREADS threads..."
+
+parallel -j "$THREADS" \
+    run_macs2 {1} {2} \
+    ::: $(printf "%s\n" "${IP_LIST[@]}" | cut -d: -f1) \
+    ::: $(printf "%s\n" "${IP_LIST[@]}" | cut -d: -f2)
+
+echo "All MACS2 peak calling completed."
+echo "Results saved in: $OUTPUT_DIR/macs2"
+echo "Logs saved in: $OUTPUT_DIR/logs"
