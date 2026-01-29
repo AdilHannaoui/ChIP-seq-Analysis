@@ -8,7 +8,6 @@
 # --------------------------
 source("R/config.R")
 
-library(tidyverse)
 library(clusterProfiler)
 library(org.Sc.sgd.db)
 library(ReactomePA)
