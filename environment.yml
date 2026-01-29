@@ -6,7 +6,7 @@ channels:
 
 dependencies:
   # Core system
-  - r-base=4.4.1
+  - r-base=4.3.3
 
   # Bioinformatics tools
   - fastqc=0.12.1
@@ -17,35 +17,34 @@ dependencies:
   - bedtools=2.31.1
   - macs2=2.2.9.1
 
-  # MEME Suite (motif analysis)
-  - meme=5.5.5
+  # MEME Suite (compatible)
+  - meme=5.5.4
 
-  # IGV (visualization snapshots)
+  # IGV
   - igv=2.16.2
-  - igvtools=2.17.0
+  - igvtools=2.16.0
 
-  # Bioconductor core (Bioc 3.19, compatible with R 4.4)
-  - bioconductor-deseq2=1.42.0
-  - bioconductor-chipseeker=1.38.0
-  - bioconductor-clusterprofiler=4.10.0
-  - bioconductor-reactomepa=1.46.0
-  - bioconductor-org.sc.sgd.db=3.19.0
-  - bioconductor-txdb.scerevisiae.ucsc.saccer3.sgdgene=3.19.0
-  - bioconductor-biostrings=2.70.1
-  - bioconductor-genomicranges=1.54.1
-  - bioconductor-bsgenome=1.70.1
+  # Bioconductor (3.18)
+  - bioconductor-deseq2=1.40.2
+  - bioconductor-chipseeker=1.36.0
+  - bioconductor-clusterprofiler=4.8.3
+  - bioconductor-reactomepa=1.44.0
+  - bioconductor-org.sc.sgd.db=3.18.0
+  - bioconductor-txdb.scerevisiae.ucsc.saccer3.sgdgene=3.18.0
+  - bioconductor-biostrings=2.68.1
+  - bioconductor-genomicranges=1.52.0
+  - bioconductor-bsgenome=1.68.0
   - bioconductor-bsgenome.scerevisiae.ucsc.saccer3=1.4.0
 
   # R packages (CRAN)
-  - r-enhancedvolcano=1.20.0
+  - r-enhancedvolcano=1.18.0
   - r-pheatmap=1.0.12
-  - r-complexheatmap=2.18.0
+  - r-complexheatmap=2.16.0
   - r-upsetr=1.4.0
-  - r-ggvenndiagram=1.2.0
+  - r-ggvenndiagram=1.1.0
   - r-ggplot2=3.5.1
   - r-ggrepel=0.9.6
 
   # Optional utilities
   - pigz
   - parallel
-
