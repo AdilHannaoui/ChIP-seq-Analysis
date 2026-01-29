@@ -17,7 +17,7 @@ dependencies:
   - bedtools=2.31.1
   - macs2=2.2.9.1
 
-  # MEME Suite (puedes fijar o no)
+  # MEME Suite
   - meme
 
   # IGV
@@ -36,10 +36,8 @@ dependencies:
   - bioconductor-bsgenome
   - bioconductor-bsgenome.scerevisiae.ucsc.saccer3
 
-  # R packages (CRAN, sin versiones)
-  - r-enhancedvolcano
+  # R packages (CRAN)
   - r-pheatmap
-  - r-complexheatmap
   - r-upsetr
   - r-ggvenndiagram
   - r-ggplot2
