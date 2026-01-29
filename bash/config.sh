@@ -32,6 +32,6 @@ HISAT2_INDEX="$WORKDIR/BOWTIE2/cerevisiae/index/genome"
 # ----------------------
 FASTQC_PRE_DIR="$OUTPUT_DIR/fastqc_pre"
 FASTQC_POST_DIR="$OUTPUT_DIR/fastqc_post"
-TRIMMED_FASTQ_DIR="$OUTPUT_DIR/fastq_trimmed"
+FASTQ_TRIM="$OUTPUT_DIR/fastq_trimmed"
 BOWTIE2_DIR="$OUTPUT_DIR/bowtie2"
 LOG_DIR="$OUTPUT_DIR/logs"
