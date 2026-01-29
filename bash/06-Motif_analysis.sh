@@ -10,9 +10,10 @@ set -euo pipefail
 # --------------------------
 # Configuration
 # --------------------------
-# Ajusta estas rutas según tu estructura
+source "$(dirname "$0")/config.sh"
+
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_R="${PROJECT_DIR}/config.R"
+CONFIG_R="R/config.R"
 
 # Extraer OUTPUT_DIR desde config.R (opcional, si quieres mantener una sola fuente de verdad)
 OUTPUT_DIR=$(Rscript -e "source('${CONFIG_R}'); cat(OUTPUT_DIR)")
