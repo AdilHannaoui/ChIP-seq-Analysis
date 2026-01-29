@@ -1,27 +1,27 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
-# Purpose: Obtain intersection peaks across all replicates using bedtools multiinter
+# ==========================
+# RIP-seq Peak Intersection Module (parallel)
 # Author: Adil Hannaoui Anaaoui
+# ==========================
 
 source "$(dirname "$0")/config.sh"
 
-mkdir -p "$OUTPUT_DIR/macs2" "$OUTPUT_DIR/logs"
+mkdir -p "$OUTPUT_DIR/macs2"
+mkdir -p "$OUTPUT_DIR/logs"
+
+cd "$WORKDIR"
 
 #############################################
-# 1. Detect Samples
+# Function to process a single sample
 #############################################
+process_sample() {
+    BASENAME="$1"
 
-for FILE in "$OUTPUT_DIR/macs2"/*_rep1_peaks.narrowPeak; do
-    [[ -e "$FILE" ]] || continue
+    echo ">>> Processing sample: $BASENAME"
 
-    BASENAME=$(basename "$FILE" | sed 's/_rep1_peaks.narrowPeak//')
-    echo "Processing sample: $BASENAME"
-
-    #############################################
-    # 2. Collect Peak Files
-    #############################################
-
+    # Collect narrowPeak files
     NARROWPEAK_FILES=()
     for NP in "$OUTPUT_DIR/macs2/${BASENAME}"_rep*_peaks.narrowPeak; do
         [[ -e "$NP" ]] || continue
@@ -32,77 +32,104 @@ for FILE in "$OUTPUT_DIR/macs2"/*_rep1_peaks.narrowPeak; do
 
     if [[ $NUM_REPS -lt 2 ]]; then
         echo "Not enough replicates for $BASENAME"
-        continue
+        return
     fi
 
     echo "Found $NUM_REPS replicates for $BASENAME"
 
-    #############################################
-    # 3. (Common peaks), Multiple Intersection
-    #############################################
+    RAW="$OUTPUT_DIR/macs2/${BASENAME}_common_raw.bed"
+    ANNOT="$OUTPUT_DIR/macs2/${BASENAME}_common_annotated.bed"
+    COUNTS_TMP="$OUTPUT_DIR/macs2/${BASENAME}_common_counts.tmp"
+    COUNTS_OUT="$OUTPUT_DIR/macs2/${BASENAME}_common_counts.txt"
+    LOGFILE="$OUTPUT_DIR/logs/${BASENAME}_intersection.log"
 
-    bedtools multiinter -i "${NARROWPEAK_FILES[@]}" \
-        | awk -v n="$NUM_REPS" '$4 == n {print $1, $2, $3}' OFS="\t" \
-        > "$OUTPUT_DIR/macs2/${BASENAME}_common_raw.bed"
+    {
+        #############################################
+        # 3. multiinter
+        #############################################
+        bedtools multiinter -i "${NARROWPEAK_FILES[@]}" \
+            | awk -v n="$NUM_REPS" '$4 == n {print $1, $2, $3}' OFS="\t" \
+            > "$RAW"
 
-    #############################################
-    # 4. GTF Annotation
-    #############################################
-
-    annotate() {
-        bedtools intersect -a "$1" -b "$GTF_FILE" -wa -wb |
+        #############################################
+        # 4. Annotation
+        #############################################
+        bedtools intersect -a "$RAW" -b "$GTF_FILE" -wa -wb |
         awk -F'\t' '
         {
             gene_id="NA"; biotype="NA"
             if (match($0, /gene_id "([^"]+)"/, m)) gene_id=m[1]
             if (match($0, /gene_biotype "([^"]+)"/, b)) biotype=b[1]
             print $1, $2, $3, ".", ".", ".", gene_id, biotype
-        }' OFS="\t" | sort -u
-    }
+        }' OFS="\t" | sort -u > "$ANNOT"
 
-    annotate "$OUTPUT_DIR/macs2/${BASENAME}_common_raw.bed" \
-        > "$OUTPUT_DIR/macs2/${BASENAME}_common_annotated.bed"
+        rm "$RAW"
 
-    rm "$OUTPUT_DIR/macs2/${BASENAME}_common_raw.bed"
+        #############################################
+        # 5. Header
+        #############################################
+        HEADER="chrom\tstart\tend\tname\tscore\tstrand\tGene_id\tBiotype"
+        for REP in $(seq 1 "$NUM_REPS"); do
+            HEADER+="\tIP${REP}\tIN${REP}"
+        done
 
-    #############################################
-    # 5. Header Obtaining
-    #############################################
+        #############################################
+        # 6. Collect BAMs
+        #############################################
+        BAM_FILES=()
+        for REP in $(seq 1 "$NUM_REPS"); do
+            BAM_FILES+=("$OUTPUT_DIR/bowtie2/${BASENAME}_IP${REP}.bam")
+            BAM_FILES+=("$OUTPUT_DIR/bowtie2/${BASENAME}_IN${REP}.bam")
+        done
 
-    HEADER="chrom\tstart\tend\tname\tscore\tstrand\tGene_id\tBiotype"
+        #############################################
+        # 7. multicov
+        #############################################
+        bedtools multicov -bams "${BAM_FILES[@]}" \
+            -bed "$ANNOT" \
+            > "$COUNTS_TMP"
 
-    for REP in $(seq 1 "$NUM_REPS"); do
-        HEADER+="\tIP${REP}\tIN${REP}"
-    done
+        #############################################
+        # 8. Combine header + counts
+        #############################################
+        {
+            echo -e "$HEADER"
+            cat "$COUNTS_TMP"
+        } > "$COUNTS_OUT"
 
-    #############################################
-    # 6. Collect BAMs
-    #############################################
+        rm "$COUNTS_TMP"
 
-    BAM_FILES=()
-    for REP in $(seq 1 "$NUM_REPS"); do
-        BAM_FILES+=("$OUTPUT_DIR/bowtie2/${BASENAME}_IP${REP}.bam")
-        BAM_FILES+=("$OUTPUT_DIR/bowtie2/${BASENAME}_IN${REP}.bam")
-    done
+        echo ">>> Finished sample: $BASENAME"
 
-    #############################################
-    # 7. multicov
-    #############################################
+    } > "$LOGFILE" 2>&1
+}
 
-    bedtools multicov -bams "${BAM_FILES[@]}" \
-        -bed "$OUTPUT_DIR/macs2/${BASENAME}_common_annotated.bed" \
-        > "$OUTPUT_DIR/macs2/${BASENAME}_common_counts.tmp"
+export -f process_sample
+export OUTPUT_DIR GTF_FILE
 
-    #############################################
-    # 8. Combine header + counts
-    #############################################
+#############################################
+# Detect all samples (rep1 only)
+#############################################
+SAMPLES=()
 
-    {
-        echo -e "$HEADER"
-        cat "$OUTPUT_DIR/macs2/${BASENAME}_common_counts.tmp"
-    } > "$OUTPUT_DIR/macs2/${BASENAME}_common_counts.txt"
-
-    rm "$OUTPUT_DIR/macs2/${BASENAME}_common_counts.tmp"
-
-    echo "Finished sample: $BASENAME"
+for FILE in "$OUTPUT_DIR/macs2"/*_rep1_peaks.narrowPeak; do
+    [[ -e "$FILE" ]] || continue
+    BASENAME=$(basename "$FILE" | sed 's/_rep1_peaks.narrowPeak//')
+    SAMPLES+=("$BASENAME")
 done
+
+if [[ ${#SAMPLES[@]} -eq 0 ]]; then
+    echo "No samples found for intersection."
+    exit 1
+fi
+
+echo "Found ${#SAMPLES[@]} samples."
+
+#############################################
+# Run in parallel
+#############################################
+parallel -j "$THREADS" process_sample ::: "${SAMPLES[@]}"
+
+echo "All intersection analyses completed."
+echo "Results saved in: $OUTPUT_DIR/macs2"
+echo "Logs saved in: $OUTPUT_DIR/logs"
