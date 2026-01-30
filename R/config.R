@@ -25,6 +25,9 @@ CONDITIONS <- c(
 
 REFERENCE_CONDITION <- "IN"
 
+library(BSgenome.Scerevisiae.UCSC.sacCer3)
+library(TxDb.Scerevisiae.UCSC.sacCer3.sgdGene)
+
 REFERENCE_GENOME <- BSgenome.Scerevisiae.UCSC.sacCer3
 REFERENCE_TXDB <- TxDb.Scerevisiae.UCSC.sacCer3.sgdGene
 
