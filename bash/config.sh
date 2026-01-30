@@ -28,6 +28,9 @@ ADAPTERS="$CONDA_PREFIX/share/trimmomatic/adapters/TruSeq3-SE.fa"
 # BOWTIE2
 BOWTIE2_INDEX="$WORKDIR/Bowtie2/cerevisiae/index/genome"
 
+# Gene annotation
+GTF_FILE="$WORKDIR/HISAT2/cerevisiae/Saccharomyces_cerevisiae.R64-1-1.112.gtf"
+
 # ----------------------
 # Output subdirectories
 # ----------------------
