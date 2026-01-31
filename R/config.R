@@ -10,7 +10,11 @@ PROJECT_ROOT <- getwd()
 
 DATA_DIR <- file.path(PROJECT_ROOT, "data")
 OUTPUT_DIR <- file.path(PROJECT_ROOT, "output")
-COUNTS_MATRIX_PATH <- "output/common_counts.txt"
+COUNTS_FILES <- list.files(
+    path = "output/macs2",
+    pattern = "_common_counts\\.txt$",
+    full.names = TRUE
+)
 SAMPLE_METADATA_PATH <- "output/colData.rds"
 PLOTS_DIR <- file.path(OUTPUT_DIR, "plots")
 
