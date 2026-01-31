@@ -21,8 +21,12 @@ COUNTS_FILES <- list.files(
 )
 
 count_list <- lapply(COUNTS_FILES, function(f) {
-  read.table(f, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+  df <- read.table(f, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+  sample_name <- sub("_common_counts\\.txt$", "", basename(f))  # M1, M12, WT
+  colnames(df)[9:14] <- paste0(sample_name, "_", colnames(df)[9:14])
+  df
 })
+
 
 # Merge all count tables by genomic annotation columns
 counts_merged <- Reduce(function(x, y) merge(
