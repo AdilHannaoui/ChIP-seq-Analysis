@@ -83,7 +83,7 @@ dds <- DESeq(dds)
 # --------------------------
 # Extract results: IP vs IN per sample
 # --------------------------
-res_M1  <- results(dds, name = "sample_groupM1.conditionIP")
+res_M1 <- results(dds, name = "condition_IP_vs_IN")
 res_M12 <- results(dds, name = "sample_groupM12.conditionIP")
 res_WT  <- results(dds, name = "sample_groupWT.conditionIP")
 
