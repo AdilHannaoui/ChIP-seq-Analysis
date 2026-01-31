@@ -13,16 +13,14 @@ library(org.Sc.sgd.db)
 library(ReactomePA)
 
 # --------------------------
-# Load annotated significant peaks
+# Helper: safe Entrez conversion
 # --------------------------
-WT_sig_annot <- read.csv(file.path(OUTPUT_DIR, "WT_significant_peaks_with_coords.csv"))
-A_sig_annot  <- read.csv(file.path(OUTPUT_DIR, "A_significant_peaks_with_coords.csv"))
-D_sig_annot  <- read.csv(file.path(OUTPUT_DIR, "D_significant_peaks_with_coords.csv"))
-
-# --------------------------
-# Convert Gene IDs to ENTREZ IDs
-# --------------------------
-convert_to_entrez <- function(gene_ids) {
+convert_to_entrez <- function(gene_ids, label) {
+  if (is.null(gene_ids) || length(gene_ids) == 0) {
+    message("No gene IDs for ", label, ". Skipping Entrez conversion.")
+    return(character(0))
+  }
+  
   entrez <- mapIds(
     org.Sc.sgd.db,
     keys = as.character(gene_ids),
@@ -30,113 +28,149 @@ convert_to_entrez <- function(gene_ids) {
     keytype = GENE_ID_TYPE,
     multiVals = "first"
   )
-  unname(entrez[!is.na(entrez)])
+  
+  entrez <- unname(entrez[!is.na(entrez)])
+  
+  if (length(entrez) == 0) {
+    message("No valid Entrez IDs for ", label, ".")
+  }
+  
+  return(entrez)
 }
 
-geneid_WT <- convert_to_entrez(WT_sig_annot$Gene_id)
-geneid_A  <- convert_to_entrez(A_sig_annot$Gene_id)
-geneid_D  <- convert_to_entrez(D_sig_annot$Gene_id)
+# --------------------------
+# Helper: safe enrichment wrapper
+# --------------------------
+run_enrichment <- function(entrez_ids, orf_ids, label) {
+  
+  # GO + Reactome need ENTREZ
+  if (length(entrez_ids) == 0) {
+    message("No Entrez IDs for ", label, ". Skipping GO and Reactome.")
+    ego <- NULL
+    ereact <- NULL
+  } else {
+    message("Running GO + Reactome for ", label, " (", length(entrez_ids), " genes)...")
+    
+    ego <- enrichGO(
+      gene          = entrez_ids,
+      OrgDb         = org.Sc.sgd.db,
+      ont           = GO_ONTOLOGY,
+      pAdjustMethod = PADJ_METHOD,
+      qvalueCutoff  = QVAL_CUTOFF
+    )
+    
+    ereact <- enrichPathway(
+      gene          = entrez_ids,
+      organism      = organism,
+      pAdjustMethod = PADJ_METHOD,
+      qvalueCutoff  = QVAL_CUTOFF
+    )
+  }
+  
+  # KEGG needs ORF IDs
+  if (length(orf_ids) == 0) {
+    message("No ORF IDs for ", label, ". Skipping KEGG.")
+    ekegg <- NULL
+  } else {
+    message("Running KEGG for ", label, " (", length(orf_ids), " ORFs)...")
+    
+    ekegg <- enrichKEGG(
+      gene          = orf_ids,
+      organism      = "sce",
+      keyType       = "kegg",
+      pAdjustMethod = PADJ_METHOD,
+      qvalueCutoff  = QVAL_CUTOFF
+    )
+  }
+  
+  return(list(GO=ego, KEGG=ekegg, REACT=ereact))
+}
 
 # --------------------------
-# GO Enrichment
+# Load annotated significant peaks
 # --------------------------
-ego_WT <- enrichGO(
-  gene          = geneid_WT,
-  OrgDb         = org.Sc.sgd.db,
-  ont           = GO_ONTOLOGY,
-  pAdjustMethod = PADJ_METHOD,
-  qvalueCutoff  = QVAL_CUTOFF
-)
+load_df <- function(path, label) {
+  df <- read.csv(path)
+  if (nrow(df) == 0) {
+    message("No significant peaks for ", label, ". Skipping.")
+  }
+  return(df)
+}
 
-ego_A <- enrichGO(
-  gene          = geneid_A,
-  OrgDb         = org.Sc.sgd.db,
-  ont           = GO_ONTOLOGY,
-  pAdjustMethod = PADJ_METHOD,
-  qvalueCutoff  = QVAL_CUTOFF
-)
+WT_sig_annot     <- load_df(file.path(OUTPUT_DIR, "WT_significant_peaks_with_coords.csv"), "WT")
+M1_sig_annot     <- load_df(file.path(OUTPUT_DIR, "M1_significant_peaks_with_coords.csv"), "M1")
+M12_sig_annot    <- load_df(file.path(OUTPUT_DIR, "M12_significant_peaks_with_coords.csv"), "M12")
 
-ego_D <- enrichGO(
-  gene          = geneid_D,
-  OrgDb         = org.Sc.sgd.db,
-  ont           = GO_ONTOLOGY,
-  pAdjustMethod = PADJ_METHOD,
-  qvalueCutoff  = QVAL_CUTOFF
-)
+WT_M1_sig_annot  <- load_df(file.path(OUTPUT_DIR, "WT_M1_significant_peaks_with_coords.csv"), "WT_M1")
+M1_M12_sig_annot <- load_df(file.path(OUTPUT_DIR, "M1_M12_significant_peaks_with_coords.csv"), "M1_M12")
+M12_WT_sig_annot <- load_df(file.path(OUTPUT_DIR, "M12_WT_significant_peaks_with_coords.csv"), "M12_WT")
 
 # --------------------------
-# KEGG Enrichment
+# Convert to Entrez (GO + Reactome)
 # --------------------------
-ekegg_WT <- enrichKEGG(
-  gene          = geneid_WT,
-  organism      = KEGG_ORGANISM,
-  pAdjustMethod = PADJ_METHOD,
-  qvalueCutoff  = QVAL_CUTOFF
-)
+geneid_WT      <- convert_to_entrez(WT_sig_annot$Gene_id, "WT")
+geneid_M1      <- convert_to_entrez(M1_sig_annot$Gene_id, "M1")
+geneid_M12     <- convert_to_entrez(M12_sig_annot$Gene_id, "M12")
 
-ekegg_A <- enrichKEGG(
-  gene          = geneid_A,
-  organism      = KEGG_ORGANISM,
-  pAdjustMethod = PADJ_METHOD,
-  qvalueCutoff  = QVAL_CUTOFF
-)
-
-ekegg_D <- enrichKEGG(
-  gene          = geneid_D,
-  organism      = KEGG_ORGANISM,
-  pAdjustMethod = PADJ_METHOD,
-  qvalueCutoff  = QVAL_CUTOFF
-)
+geneid_WT_M1   <- convert_to_entrez(WT_M1_sig_annot$Gene_id, "WT_M1")
+geneid_M1_M12  <- convert_to_entrez(M1_M12_sig_annot$Gene_id, "M1_M12")
+geneid_M12_WT  <- convert_to_entrez(M12_WT_sig_annot$Gene_id, "M12_WT")
 
 # --------------------------
-# Reactome Enrichment
+# ORF IDs for KEGG
 # --------------------------
-ereact_WT <- enrichPathway(
-  gene          = geneid_WT,
-  organism      = organism,
-  pAdjustMethod = PADJ_METHOD,
-  qvalueCutoff  = QVAL_CUTOFF
-)
+orf_WT      <- WT_sig_annot$Gene_id
+orf_M1      <- M1_sig_annot$Gene_id
+orf_M12     <- M12_sig_annot$Gene_id
 
-ereact_A <- enrichPathway(
-  gene          = geneid_A,
-  organism      = organism,
-  pAdjustMethod = PADJ_METHOD,
-  qvalueCutoff  = QVAL_CUTOFF
-)
-
-ereact_D <- enrichPathway(
-  gene          = geneid_D,
-  organism      = organism,
-  pAdjustMethod = PADJ_METHOD,
-  qvalueCutoff  = QVAL_CUTOFF
-)
+orf_WT_M1   <- WT_M1_sig_annot$Gene_id
+orf_M1_M12  <- M1_M12_sig_annot$Gene_id
+orf_M12_WT  <- M12_WT_sig_annot$Gene_id
 
 # --------------------------
-# Save results (RDS + CSV)
+# Run enrichment safely
 # --------------------------
-saveRDS(ego_WT,   file.path(OUTPUT_DIR, "GO_enrichment_WT.rds"))
-saveRDS(ego_A,    file.path(OUTPUT_DIR, "GO_enrichment_A.rds"))
-saveRDS(ego_D,    file.path(OUTPUT_DIR, "GO_enrichment_D.rds"))
+res_WT      <- run_enrichment(geneid_WT, orf_WT, "WT")
+res_M1      <- run_enrichment(geneid_M1, orf_M1, "M1")
+res_M12     <- run_enrichment(geneid_M12, orf_M12, "M12")
 
-saveRDS(ekegg_WT, file.path(OUTPUT_DIR, "KEGG_enrichment_WT.rds"))
-saveRDS(ekegg_A,  file.path(OUTPUT_DIR, "KEGG_enrichment_A.rds"))
-saveRDS(ekegg_D,  file.path(OUTPUT_DIR, "KEGG_enrichment_D.rds"))
+res_WT_M1   <- run_enrichment(geneid_WT_M1, orf_WT_M1, "WT_M1")
+res_M1_M12  <- run_enrichment(geneid_M1_M12, orf_M1_M12, "M1_M12")
+res_M12_WT  <- run_enrichment(geneid_M12_WT, orf_M12_WT, "M12_WT")
 
-saveRDS(ereact_WT, file.path(OUTPUT_DIR, "Reactome_enrichment_WT.rds"))
-saveRDS(ereact_A,  file.path(OUTPUT_DIR, "Reactome_enrichment_A.rds"))
-saveRDS(ereact_D,  file.path(OUTPUT_DIR, "Reactome_enrichment_D.rds"))
+# --------------------------
+# Helper: save results only if not NULL
+# --------------------------
+save_res <- function(obj, prefix) {
+  if (!is.null(obj)) {
+    saveRDS(obj, file.path(OUTPUT_DIR, paste0(prefix, ".rds")))
+    write.csv(as.data.frame(obj), file.path(OUTPUT_DIR, paste0(prefix, ".csv")))
+  }
+}
 
-write.csv(as.data.frame(ego_WT),   file.path(OUTPUT_DIR, "GO_enrichment_WT.csv"))
-write.csv(as.data.frame(ego_A),    file.path(OUTPUT_DIR, "GO_enrichment_A.csv"))
-write.csv(as.data.frame(ego_D),    file.path(OUTPUT_DIR, "GO_enrichment_D.csv"))
+# --------------------------
+# Save all results
+# --------------------------
+save_res(res_WT$GO,   "GO_enrichment_WT")
+save_res(res_M1$GO,   "GO_enrichment_M1")
+save_res(res_M12$GO,  "GO_enrichment_M12")
+save_res(res_WT_M1$GO,   "GO_enrichment_WT_M1")
+save_res(res_M1_M12$GO,  "GO_enrichment_M1_M12")
+save_res(res_M12_WT$GO,  "GO_enrichment_M12_WT")
 
-write.csv(as.data.frame(ekegg_WT), file.path(OUTPUT_DIR, "KEGG_enrichment_WT.csv"))
-write.csv(as.data.frame(ekegg_A),  file.path(OUTPUT_DIR, "KEGG_enrichment_A.csv"))
-write.csv(as.data.frame(ekegg_D),  file.path(OUTPUT_DIR, "KEGG_enrichment_D.csv"))
+save_res(res_WT$KEGG,   "KEGG_enrichment_WT")
+save_res(res_M1$KEGG,   "KEGG_enrichment_M1")
+save_res(res_M12$KEGG,  "KEGG_enrichment_M12")
+save_res(res_WT_M1$KEGG,   "KEGG_enrichment_WT_M1")
+save_res(res_M1_M12$KEGG,  "KEGG_enrichment_M1_M12")
+save_res(res_M12_WT$KEGG,  "KEGG_enrichment_M12_WT")
 
-write.csv(as.data.frame(ereact_WT), file.path(OUTPUT_DIR, "Reactome_enrichment_WT.csv"))
-write.csv(as.data.frame(ereact_A),  file.path(OUTPUT_DIR, "Reactome_enrichment_A.csv"))
-write.csv(as.data.frame(ereact_D),  file.path(OUTPUT_DIR, "Reactome_enrichment_D.csv"))
+save_res(res_WT$REACT,   "Reactome_enrichment_WT")
+save_res(res_M1$REACT,   "Reactome_enrichment_M1")
+save_res(res_M12$REACT,  "Reactome_enrichment_M12")
+save_res(res_WT_M1$REACT,   "Reactome_enrichment_WT_M1")
+save_res(res_M1_M12$REACT,  "Reactome_enrichment_M1_M12")
+save_res(res_M12_WT$REACT,  "Reactome_enrichment_M12_WT")
 
-cat("Enrichment analysis (GO, KEGG, Reactome) completed. Results saved in:", OUTPUT_DIR, "\n")
+cat("Enrichment analysis completed. Results saved in:", OUTPUT_DIR, "\n")
+
