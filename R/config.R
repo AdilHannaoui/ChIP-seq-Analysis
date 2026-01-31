@@ -19,10 +19,10 @@ SAMPLE_METADATA_PATH <- "output/colData.rds"
 PLOTS_DIR <- file.path(OUTPUT_DIR, "plots")
 
 CONDITIONS <- c(
-  rep("Rpb4-S/T-A_IN", 3),
-  rep("Rpb4-S/T-A_IP", 3),
-  rep("Rpb4-S/T-D_IN", 3),
-  rep("Rpb4-S/T-D_IP", 3),
+  rep("M1_IN", 3),
+  rep("M1_IP", 3),
+  rep("M12_IN", 3),
+  rep("M12_IP", 3),
   rep("WT_IN", 3),
   rep("WT_IP", 3)
 )
