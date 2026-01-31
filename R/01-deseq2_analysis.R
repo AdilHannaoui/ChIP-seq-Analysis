@@ -13,7 +13,25 @@ library(DESeq2)
 # --------------------------
 # Load data
 # --------------------------
-counts_matrix <- readRDS(COUNTS_MATRIX_PATH)    # counts matrix: genes x samples
+COUNTS_FILES <- list.files(
+    path = "output/macs2",
+    pattern = "_common_counts\\.txt$",
+    full.names = TRUE
+)
+
+count_list <- lapply(COUNTS_FILES, function(f) {
+    read.table(f, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
+})
+
+counts_merged <- Reduce(function(x, y) merge(
+    x, y,
+    by = c("chrom","start","end","name","score","strand","Gene_id","Biotype"),
+    all = TRUE
+), count_list)
+
+counts_matrix <- counts_merged[ , -(1:8)]
+rownames(counts_matrix) <- counts_merged$Gene_id
+
 colData <- readRDS(SAMPLE_METADATA_PATH)       # metadata: samples x conditions
 
 sample_group <- sub("_.*", "", CONDITIONS)
