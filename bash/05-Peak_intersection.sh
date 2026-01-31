@@ -45,11 +45,24 @@ process_sample() {
 
     {
         #############################################
-        # 3. multiinter
+        # 3. CHAIN INTERSECT (rep1 ∩ rep2 ∩ rep3…)
         #############################################
-        bedtools multiinter -i "${NARROWPEAK_FILES[@]}" \
-            | awk -v n="$NUM_REPS" '$4 == n {print $1, $2, $3}' OFS="\t" \
-            > "$RAW"
+
+        # Start with the first replicate
+        cp "${NARROWPEAK_FILES[0]}" "$RAW"
+
+        # Intersect sequentially with the rest
+        for ((i=1; i<NUM_REPS; i++)); do
+            bedtools intersect -a "$RAW" -b "${NARROWPEAK_FILES[$i]}" -wa -u > "${RAW}.tmp"
+            mv "${RAW}.tmp" "$RAW"
+        done
+
+        # If RAW is empty → no common peaks
+        if [[ ! -s "$RAW" ]]; then
+            echo "No common peaks for $BASENAME"
+            rm -f "$RAW"
+            return
+        fi
 
         #############################################
         # 4. Annotation
@@ -78,8 +91,8 @@ process_sample() {
         #############################################
         BAM_FILES=()
         for REP in $(seq 1 "$NUM_REPS"); do
-            BAM_FILES+=("$OUTPUT_DIR/bowtie2/${BASENAME}_IP${REP}.bam")
-            BAM_FILES+=("$OUTPUT_DIR/bowtie2/${BASENAME}_IN${REP}.bam")
+            BAM_FILES+=("$OUTPUT_DIR/bowtie2/${BASENAME}_IP${REP}_trimmed.bam")
+            BAM_FILES+=("$OUTPUT_DIR/bowtie2/${BASENAME}_IN${REP}_trimmed.bam")
         done
 
         #############################################
