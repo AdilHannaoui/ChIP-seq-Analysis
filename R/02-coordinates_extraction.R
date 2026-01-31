@@ -25,20 +25,26 @@ counts_df <- readRDS(file.path(OUTPUT_DIR, "counts_merged.rds"))
 # --------------------------
 # Merge coordinates with DESeq2 results
 # --------------------------
-WT_sig_annot <- cbind(
-  counts_df[rownames(res_WT_sig), c("chrom","start","end")],
-  as.data.frame(res_WT_sig)
-)
+WT_sig_annot <- counts_df %>%
+  filter(Gene_id %in% rownames(res_WT_sig)) %>%
+  left_join(
+    as.data.frame(res_WT_sig) %>% mutate(Gene_id = rownames(res_WT_sig)),
+    by = "Gene_id"
+  )
 
-A_sig_annot <- cbind(
-  counts_df[rownames(res_A_sig), c("chrom","start","end")],
-  as.data.frame(res_A_sig)
-)
+A_sig_annot <- counts_df %>%
+  filter(GGene_id %in% rownames(res_A_sig)) %>%
+  left_join(
+    as.data.frame(res_A_sig) %>% mutate(Gene_id = rownames(res_A_sig)),
+    by = "Gene_id"
+  )
 
-D_sig_annot <- cbind(
-  counts_df[rownames(res_D_sig), c("chrom","start","end")],
-  as.data.frame(res_D_sig)
-)
+D_sig_annot <- counts_df %>%
+  filter(Gene_id %in% rownames(res_D_sig)) %>%
+  left_join(
+    as.data.frame(res_D_sig) %>% mutate(Gene_id = rownames(res_D_sig)),
+    by = "Gene_id"
+  )
 
 # --------------------------
 # Save annotated CSV tables
