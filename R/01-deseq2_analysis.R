@@ -50,7 +50,7 @@ counts_matrix$Gene_id <- NULL
 sample_names <- colnames(counts_matrix)
 
 # Extract sample group (M1, M2, M3...) from filenames
-sample_groups <- sub("_common_counts\\.txt$", "", basename(COUNTS_FILES))
+sample_groups_raw <- sub("_common_counts\\.txt$", "", basename(COUNTS_FILES))
 sample_groups <- make.names(sample_groups_raw)
 
 # Expand sample_groups to match IP/IN columns
