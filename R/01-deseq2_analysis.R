@@ -61,13 +61,17 @@ colData <- data.frame(
   condition     = factor(condition, levels = c("IN", "IP"))
 )
 
+colData$sample_group <- factor(colData$sample_group, levels = c("M1", "M12", "WT"))
+colData$group_condition <- factor(paste0(colData$sample_group, "_", colData$condition))
+
+
 # --------------------------
 # Create DESeqDataSet
 # --------------------------
 dds <- DESeqDataSetFromMatrix(
   countData = counts_matrix,
   colData   = colData,
-  design    = ~ sample_group + condition + sample_group:condition
+  design = ~ group_condition
 )
 
 # --------------------------
@@ -83,9 +87,9 @@ dds <- DESeq(dds)
 # --------------------------
 # Extract results: IP vs IN per sample
 # --------------------------
-res_M1 <- results(dds, name = "condition_IP_vs_IN")
-res_M12 <- results(dds, name = "sample_groupM12.conditionIP")
-res_WT  <- results(dds, name = "sample_groupWT.conditionIP")
+res_M1  <- results(dds, contrast = c("group_condition", "M1_IP",  "M1_IN"))
+res_WT  <- results(dds, contrast = c("group_condition", "WT_IP",  "WT_IN"))
+res_M12 <- results(dds, contrast = c("group_condition", "M12_IP", "M12_IN"))
 
 res_M1_sig  <- res_M1[which(res_M1$padj  < PADJ_THRESHOLD), ]
 res_M12_sig <- res_M12[which(res_M12$padj < PADJ_THRESHOLD), ]
@@ -94,24 +98,35 @@ res_WT_sig  <- res_WT[which(res_WT$padj  < PADJ_THRESHOLD), ]
 # --------------------------
 # Extract results: differences between groups
 # --------------------------
-res_WT_vs_M1 <- results(dds, contrast = list(
-  c("sample_groupWT.conditionIP"),
-  c("sample_groupM1.conditionIP")
+
+dds_paired <- DESeqDataSetFromMatrix(
+  countData = counts_matrix,
+  colData   = colData,
+  design = ~ sample_group + condition + sample_group:condition
+)
+
+# --------------------------
+# Filter low-count genes
+# --------------------------
+dds_paired <- dds_paired[rowSums(counts(dds_paired)) > MIN_COUNTS_FILTER, ]
+
+# --------------------------
+# Run DESeq2
+# --------------------------
+dds_paired <- DESeq(dds_paired)
+
+
+res_WT_vs_M1 <- results(dds_paired, name = "sample_groupWT.conditionIP")
+res_M12_vs_M1 <- results(dds_paired, name = "sample_groupM12.conditionIP")
+res_WT_vs_M12 <- results(dds_paired, contrast = list(
+  "sample_groupWT.conditionIP",
+  "sample_groupM12.conditionIP"
 ))
 
-res_WT_vs_M12 <- results(dds, contrast = list(
-  c("sample_groupWT.conditionIP"),
-  c("sample_groupM12.conditionIP")
-))
-
-res_M1_vs_M12 <- results(dds, contrast = list(
-  c("sample_groupM1.conditionIP"),
-  c("sample_groupM12.conditionIP")
-))
 
 res_WT_vs_M1_sig  <- res_WT_vs_M1[which(res_WT_vs_M1$padj  < PADJ_THRESHOLD), ]
 res_WT_vs_M12_sig <- res_WT_vs_M12[which(res_WT_vs_M12$padj < PADJ_THRESHOLD), ]
-res_M1_vs_M12_sig <- res_M1_vs_M12[which(res_M1_vs_M12$padj < PADJ_THRESHOLD), ]
+res_M12_vs_M1_sig <- res_M12_vs_M1[which(res_M12_vs_M1$padj < PADJ_THRESHOLD), ]
 
 # --------------------------
 # Save results
@@ -120,6 +135,7 @@ dir.create(OUTPUT_DIR, showWarnings = FALSE, recursive = TRUE)
 
 # Core objects for downstream modules
 saveRDS(dds,           file = file.path(OUTPUT_DIR, "dds.rds"))
+saveRDS(dds_paired,    file = file.path(OUTPUT_DIR, "dds_paired.rds"))
 saveRDS(colData,       file = file.path(OUTPUT_DIR, "colData.rds"))
 saveRDS(counts_merged, file = file.path(OUTPUT_DIR, "counts_merged.rds"))
 
@@ -135,10 +151,10 @@ write.csv(as.data.frame(res_WT_sig),  file = file.path(OUTPUT_DIR, "DESeq2_res_W
 # Differences between groups
 saveRDS(res_WT_vs_M1_sig,  file = file.path(OUTPUT_DIR, "DESeq2_res_WT_vs_M1_sig.rds"))
 saveRDS(res_WT_vs_M12_sig, file = file.path(OUTPUT_DIR, "DESeq2_res_WT_vs_M12_sig.rds"))
-saveRDS(res_M1_vs_M12_sig, file = file.path(OUTPUT_DIR, "DESeq2_res_M1_vs_M12_sig.rds"))
+saveRDS(res_M12_vs_M1_sig, file = file.path(OUTPUT_DIR, "DESeq2_res_M12_vs_M1_sig.rds"))
 
 write.csv(as.data.frame(res_WT_vs_M1_sig),  file = file.path(OUTPUT_DIR, "DESeq2_res_WT_vs_M1_sig.csv"))
 write.csv(as.data.frame(res_WT_vs_M12_sig), file = file.path(OUTPUT_DIR, "DESeq2_res_WT_vs_M12_sig.csv"))
-write.csv(as.data.frame(res_M1_vs_M12_sig), file = file.path(OUTPUT_DIR, "DESeq2_res_M1_vs_M12_sig.csv"))
+write.csv(as.data.frame(res_M12_vs_M1_sig), file = file.path(OUTPUT_DIR, "DESeq2_res_M12_vs_M1_sig.csv"))
 
 cat("DESeq2 analysis completed. Significant results saved in:", OUTPUT_DIR, "\n")
