@@ -112,6 +112,7 @@ saveRDS(dds, file = file.path(OUTPUT_DIR, "dds.rds"))
 saveRDS(res_WT_sig, file = file.path(OUTPUT_DIR, "DESeq2_res_WT_sig.rds"))
 saveRDS(res_A_sig, file = file.path(OUTPUT_DIR, "DESeq2_res_A_sig.rds"))
 saveRDS(res_D_sig, file = file.path(OUTPUT_DIR, "DESeq2_res_D_sig.rds"))
+saveRDS(counts_merged, file = file.path(OUTPUT_DIR, "counts_merged.rds"))
 
 write.csv(as.data.frame(res_WT_sig), file = file.path(OUTPUT_DIR, "DESeq2_res_WT_sig.csv"))
 write.csv(as.data.frame(res_A_sig), file = file.path(OUTPUT_DIR, "DESeq2_res_A_sig.csv"))
