@@ -33,7 +33,7 @@ WT_sig_annot <- counts_df %>%
   )
 
 A_sig_annot <- counts_df %>%
-  filter(GGene_id %in% rownames(res_A_sig)) %>%
+  filter(Gene_id %in% rownames(res_A_sig)) %>%
   left_join(
     as.data.frame(res_A_sig) %>% mutate(Gene_id = rownames(res_A_sig)),
     by = "Gene_id"
