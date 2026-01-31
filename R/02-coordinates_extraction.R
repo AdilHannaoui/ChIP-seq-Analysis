@@ -20,7 +20,7 @@ res_D_sig  <- readRDS(file.path(OUTPUT_DIR, "DESeq2_res_D_sig.rds"))
 # --------------------------
 # Load counts with coordinates
 # --------------------------
-counts_df <- read.delim(COUNTS_MATRIX_PATH, header = TRUE)
+counts_df <- readRDS(file.path(OUTPUT_DIR, "counts_merged.rds"))
 
 # Ensure peak ID is used as rownames
 rownames(counts_df) <- counts_df$name
