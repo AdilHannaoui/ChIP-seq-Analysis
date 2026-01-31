@@ -93,8 +93,8 @@ dds <- DESeq(dds)
 # Extract results for contrasts
 # --------------------------
 res_WT <- results(dds, contrast = c("group_condition", "WT_IP", "WT_IN"))
-res_A <- results(dds, contrast = c("group_condition", "Rpb4-S/T-A_IP", "Rpb4-S/T-A_IN"))
-res_D <- results(dds, contrast = c("group_condition", "Rpb4-S/T-D_IP", "Rpb4-S/T-D_IN"))
+res_A <- results(dds, contrast = c("group_condition", "M1_IP", "M1_IN"))
+res_D <- results(dds, contrast = c("group_condition", "M12_IP", "M12_IN"))
 
 # --------------------------
 # Filter significant genes
