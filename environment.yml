@@ -37,6 +37,7 @@ dependencies:
   - bioconductor-genomicranges
   - bioconductor-bsgenome
   - bioconductor-bsgenome.scerevisiae.ucsc.saccer3
+  - bioconductor-complexheatmap
 
   # R packages (CRAN)
   - r-pheatmap
