@@ -12,7 +12,6 @@ source("R/config.R")
 # Libraries
 # --------------------------
 library(DESeq2)
-library(EnhancedVolcano)
 library(ComplexHeatmap)
 library(circlize)
 library(UpSetR)
@@ -25,149 +24,219 @@ library(ggplot2)
 # ==========================
 
 # DESeq2 objects
-dds <- readRDS(file.path(OUTPUT_DIR, "dds_object.rds"))
-vsd <- readRDS(file.path(OUTPUT_DIR, "vsd_object.rds"))
+dds <- readRDS(file.path(OUTPUT_DIR, "dds.rds"))
+vsd <- vst(dds, blind=FALSE)
+dds_paired <- readRDS(file.path(OUTPUT_DIR, "dds_paired.rds"))
+vsd_paired <- vst(dds_paired, blind=FALSE)
 
 # DESeq2 results (contrasts)
-res_WT <- readRDS(file.path(OUTPUT_DIR, "DESeq2_res_WT.rds"))  # si lo usas
-res_A  <- readRDS(file.path(OUTPUT_DIR, "DESeq2_res_A.rds"))
-res_D  <- readRDS(file.path(OUTPUT_DIR, "DESeq2_res_D.rds"))
+res_list <- list(
+  WT      = readRDS(file.path(OUTPUT_DIR, "DESeq2_res_WT_sig.rds")),
+  M1      = readRDS(file.path(OUTPUT_DIR, "DESeq2_res_M1_sig.rds")),
+  M12     = readRDS(file.path(OUTPUT_DIR, "DESeq2_res_M12_sig.rds")),
+  WT_M1   = readRDS(file.path(OUTPUT_DIR, "DESeq2_res_WT_vs_M1_sig.rds")),
+  M1_M12  = readRDS(file.path(OUTPUT_DIR, "DESeq2_res_M12_vs_M1_sig.rds")),
+  M12_WT  = readRDS(file.path(OUTPUT_DIR, "DESeq2_res_WT_vs_M12_sig.rds"))
+)
 
-# Tablas de picos significativos (para listas de genes)
-WT_sig_annot <- read.csv(file.path(OUTPUT_DIR, "WT_significant_peaks_with_coords.csv"))
-A_sig_annot  <- read.csv(file.path(OUTPUT_DIR, "A_significant_peaks_with_coords.csv"))
-D_sig_annot  <- read.csv(file.path(OUTPUT_DIR, "D_significant_peaks_with_coords.csv"))
+# ==========================
+# Detect empty contrasts
+# ==========================
+valid_res <- list()
+
+for (nm in names(res_list)) {
+  res <- res_list[[nm]]
+  
+  if (is.null(res) || nrow(res) == 0 || !"log2FoldChange" %in% colnames(res)) {
+    message("Skipping contrast ", nm, " (empty or invalid)")
+  } else {
+    valid_res[[nm]] <- res
+  }
+}
+
+# ==========================
+# Load annotation tables
+# ==========================
+WT_sig_annot     <- read.csv(file.path(OUTPUT_DIR, "WT_significant_peaks_with_coords.csv"))
+M1_sig_annot     <- read.csv(file.path(OUTPUT_DIR, "M1_significant_peaks_with_coords.csv"))
+M12_sig_annot    <- read.csv(file.path(OUTPUT_DIR, "M12_significant_peaks_with_coords.csv"))
+
+WT_M1_sig_annot  <- read.csv(file.path(OUTPUT_DIR, "WT_M1_significant_peaks_with_coords.csv"))
+M1_M12_sig_annot <- read.csv(file.path(OUTPUT_DIR, "M1_M12_significant_peaks_with_coords.csv"))
+M12_WT_sig_annot <- read.csv(file.path(OUTPUT_DIR, "M12_WT_significant_peaks_with_coords.csv"))
 
 # ==========================
 # Helper: convertir a ENTREZ
 # ==========================
 convert_to_entrez <- function(gene_ids) {
+  if (is.null(gene_ids) || length(gene_ids) == 0) return(character(0))
+  
   entrez <- mapIds(
     org.Sc.sgd.db,
-    keys     = as.character(gene_ids),
-    column   = ENTREZ_COLUMN,   # definido en config.R, normalmente "ENTREZID"
-    keytype  = GENE_ID_TYPE,    # definido en config.R, p.ej. "ENSEMBL" o "SYMBOL"
+    keys = as.character(gene_ids),
+    column = "ENTREZID",
+    keytype = GENE_ID_TYPE,
     multiVals = "first"
   )
+  
   unname(entrez[!is.na(entrez)])
 }
 
-geneid_WT <- convert_to_entrez(WT_sig_annot$Gene_id)
-geneid_A  <- convert_to_entrez(A_sig_annot$Gene_id)
-geneid_D  <- convert_to_entrez(D_sig_annot$Gene_id)
+geneid_list <- list(
+  WT      = convert_to_entrez(WT_sig_annot$Gene_id),
+  M1      = convert_to_entrez(M1_sig_annot$Gene_id),
+  M12     = convert_to_entrez(M12_sig_annot$Gene_id),
+  WT_M1   = convert_to_entrez(WT_M1_sig_annot$Gene_id),
+  M1_M12  = convert_to_entrez(M1_M12_sig_annot$Gene_id),
+  M12_WT  = convert_to_entrez(M12_WT_sig_annot$Gene_id)
+)
 
 # ==========================
 # PCA
 # ==========================
-pca <- plotPCA(vsd, intgroup = "condition") +
-  ggtitle("PCA of RIP-seq samples")
+ggsave(file.path(OUTPUT_DIR, "PCA_plot.png"),
+       plotPCA(vsd, intgroup="condition") + ggtitle("PCA of RIP-seq samples"),
+       width=7, height=6)
 
-ggsave(file.path(OUTPUT_DIR, "PCA_plot.png"), pca, width = 7, height = 6)
+ggsave(file.path(OUTPUT_DIR, "PCA_paired_plot.png"),
+       plotPCA(vsd_paired, intgroup="condition") + ggtitle("PCA of RIP-seq samples"),
+       width=7, height=6)
 
 # ==========================
-# MA plots (WT vs A, WT vs D)
+# MA plots (only valid contrasts)
 # ==========================
-png(file.path(OUTPUT_DIR, "MAplot_WT_vs_A.png"), width = 1200, height = 900)
-plotMA(res_A, ylim = c(-5, 5), main = "MA Plot WT vs A")
+for (nm in names(valid_res)) {
+  png(file.path(OUTPUT_DIR, paste0("MAplot_", nm, ".png")), width=1200, height=900)
+  plotMA(valid_res[[nm]], ylim=c(-5,5), cex=1.2)
+  dev.off()
+}
+
+# ==========================
+# Correlation heatmaps
+# ==========================
+png(file.path(OUTPUT_DIR, "CorrelationHeatmap_samples.png"), width=1200, height=1000)
+Heatmap(cor(assay(vsd)), name="correlation")
 dev.off()
 
-png(file.path(OUTPUT_DIR, "MAplot_WT_vs_D.png"), width = 1200, height = 900)
-plotMA(res_D, ylim = c(-5, 5), main = "MA Plot WT vs D")
-dev.off()
-
-# ==========================
-# Enhanced Volcano plots
-# ==========================
-volcano_A <- EnhancedVolcano(
-  res_A,
-  lab = rownames(res_A),
-  x = "log2FoldChange",
-  y = "padj",
-  title = "Volcano Plot WT vs A"
-)
-
-volcano_D <- EnhancedVolcano(
-  res_D,
-  lab = rownames(res_D),
-  x = "log2FoldChange",
-  y = "padj",
-  title = "Volcano Plot WT vs D"
-)
-
-ggsave(file.path(OUTPUT_DIR, "Volcano_WT_vs_A.png"), volcano_A, width = 8, height = 7)
-ggsave(file.path(OUTPUT_DIR, "Volcano_WT_vs_D.png"), volcano_D, width = 8, height = 7)
-
-# ==========================
-# Sample-to-sample correlation heatmap
-# ==========================
-vsd_mat <- assay(vsd)
-cor_mat <- cor(vsd_mat)
-
-png(file.path(OUTPUT_DIR, "CorrelationHeatmap_samples.png"), width = 1200, height = 1000)
-ht <- Heatmap(
-  cor_mat,
-  name = "correlation",
-  cluster_rows = TRUE,
-  cluster_columns = TRUE,
-  column_title = "Sample-to-sample correlation",
-  row_title = "Samples",
-  col = colorRamp2(c(0.7, 0.85, 1), c("white", "skyblue", "darkblue"))
-)
-draw(ht)
+png(file.path(OUTPUT_DIR, "CorrelationHeatmap_paired_samples.png"), width=1200, height=1000)
+Heatmap(cor(assay(vsd_paired)), name="correlation")
 dev.off()
 
 # ==========================
-# UpSet plot (intersección de genes significativos)
+# UpSet plots (only valid contrasts)
 # ==========================
-WT_sig_genes <- rownames(res_WT[which(res_WT$padj < 0.05 & !is.na(res_WT$padj)), ])
-A_sig_genes  <- rownames(res_A[which(res_A$padj < 0.05 & !is.na(res_A$padj)), ])
-D_sig_genes  <- rownames(res_D[which(res_D$padj < 0.05 & !is.na(res_D$padj)), ])
+sig_genes <- function(res) {
+  if (is.null(res)) return(character(0))
+  rownames(res[which(res$padj < 0.05 & !is.na(res$padj)), ])
+}
 
-upset_list <- list(
-  WT = WT_sig_genes,
-  A  = A_sig_genes,
-  D  = D_sig_genes
-)
+# Unpaired
+unpaired_valid <- intersect(c("WT","M1","M12"), names(valid_res))
 
-png(file.path(OUTPUT_DIR, "UpSet_WT_A_D.png"), width = 1200, height = 900)
-upset(fromList(upset_list), order.by = "freq", main.bar.color = "steelblue")
-dev.off()
+if (length(unpaired_valid) > 0) {
+  upset_list <- lapply(unpaired_valid, function(nm) sig_genes(valid_res[[nm]]))
+  names(upset_list) <- unpaired_valid
+  
+  png(file.path(OUTPUT_DIR, "UpSet_WT_M1_M12.png"), width=1200, height=900)
+  upset(fromList(upset_list), order.by="freq")
+  dev.off()
+}
+
+# Paired
+paired_valid <- intersect(c("WT_M1","M1_M12","M12_WT"), names(valid_res))
+
+if (length(paired_valid) > 0) {
+  upset_list_paired <- lapply(paired_valid, function(nm) sig_genes(valid_res[[nm]]))
+  names(upset_list_paired) <- paired_valid
+  
+  png(file.path(OUTPUT_DIR, "UpSet_paired_WT_M1_M12.png"), width=1200, height=900)
+  upset(fromList(upset_list_paired), order.by="freq")
+  dev.off()
+}
 
 # ==========================
-# Dotplots de enriquecimiento (GO, KEGG, Reactome)
+# SAFE DOTPLOT FUNCTION
 # ==========================
+safe_dotplot <- function(geneid_subset, filename, fun, ...) {
+  # Filtrar grupos vacíos
+  geneid_subset <- geneid_subset[sapply(geneid_subset, function(x) length(x) > 0)]
+  
+  if (length(geneid_subset) == 0) {
+    message("Skipping ", filename, " (all gene lists empty)")
+    return()
+  }
+  
+  # Intentar enriquecimiento
+  cc <- try(compareCluster(geneid_subset, fun = fun, ...), silent = TRUE)
+  
+  if (inherits(cc, "try-error") || is.null(cc) || nrow(cc) == 0) {
+    message("Skipping ", filename, " (no enrichment found)")
+    return()
+  }
+  
+  # Intentar dotplot
+  dp <- try(dotplot(cc), silent = TRUE)
+  
+  if (inherits(dp, "try-error")) {
+    message("Skipping ", filename, " (dotplot failed)")
+    return()
+  }
+  
+  ggsave(file.path(OUTPUT_DIR, filename), dp, width = 10, height = 8)
+}
+
+# ==========================
+# Dotplots (GO, KEGG, Reactome)
+# ==========================
+
 # GO
-dot_GO <- dotplot(
-  compareCluster(
-    list(WT = geneid_WT, A = geneid_A, D = geneid_D),
-    fun   = "enrichGO",
-    OrgDb = org.Sc.sgd.db,
-    ont   = GO_ONTOLOGY
-  )
-) + ggtitle("GO enrichment comparison (WT, A, D)")
+safe_dotplot(
+  geneid_list[c("WT","M1","M12")],
+  "Dotplot_GO.png",
+  fun = "enrichGO",
+  OrgDb = org.Sc.sgd.db,
+  ont = GO_ONTOLOGY
+)
 
-ggsave(file.path(OUTPUT_DIR, "Dotplot_GO.png"), dot_GO, width = 10, height = 8)
+# GO paired
+safe_dotplot(
+  geneid_list[c("WT_M1","M1_M12","M12_WT")],
+  "Dotplot_GO_paired.png",
+  fun = "enrichGO",
+  OrgDb = org.Sc.sgd.db,
+  ont = GO_ONTOLOGY
+)
 
 # KEGG
-dot_KEGG <- dotplot(
-  compareCluster(
-    list(WT = geneid_WT, A = geneid_A, D = geneid_D),
-    fun      = "enrichKEGG",
-    organism = KEGG_ORGANISM
-  )
-) + ggtitle("KEGG enrichment comparison (WT, A, D)")
+safe_dotplot(
+  geneid_list[c("WT","M1","M12")],
+  "Dotplot_KEGG.png",
+  fun = "enrichKEGG",
+  organism = KEGG_ORGANISM
+)
 
-ggsave(file.path(OUTPUT_DIR, "Dotplot_KEGG.png"), dot_KEGG, width = 10, height = 8)
+# KEGG paired
+safe_dotplot(
+  geneid_list[c("WT_M1","M1_M12","M12_WT")],
+  "Dotplot_KEGG_paired.png",
+  fun = "enrichKEGG",
+  organism = KEGG_ORGANISM
+)
 
 # Reactome
-dot_Reactome <- dotplot(
-  compareCluster(
-    list(WT = geneid_WT, A = geneid_A, D = geneid_D),
-    fun      = "enrichPathway",
-    organism = REACTOME_ORGANISM
-  )
-) + ggtitle("Reactome enrichment comparison (WT, A, D)")
+safe_dotplot(
+  geneid_list[c("WT","M1","M12")],
+  "Dotplot_Reactome.png",
+  fun = "enrichPathway",
+  organism = REACTOME_ORGANISM
+)
 
-ggsave(file.path(OUTPUT_DIR, "Dotplot_Reactome.png"), dot_Reactome, width = 10, height = 8)
+# Reactome paired
+safe_dotplot(
+  geneid_list[c("WT_M1","M1_M12","M12_WT")],
+  "Dotplot_Reactome_paired.png",
+  fun = "enrichPathway",
+  organism = REACTOME_ORGANISM
+)
 
 cat("Visualization module completed. All plots saved in:", OUTPUT_DIR, "\n")
