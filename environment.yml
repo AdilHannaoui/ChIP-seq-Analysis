@@ -1,4 +1,4 @@
-name: ripseq-rpb4
+name: chipseq-rpb4
 channels:
   - conda-forge
   - bioconda
