@@ -96,48 +96,13 @@ res_M12_sig <- res_M12[which(res_M12$padj < PADJ_THRESHOLD), ]
 res_WT_sig  <- res_WT[which(res_WT$padj  < PADJ_THRESHOLD), ]
 
 # --------------------------
-# Extract results: differences between groups
-# --------------------------
-
-dds_paired <- DESeqDataSetFromMatrix(
-  countData = counts_matrix,
-  colData   = colData,
-  design = ~ sample_group + condition + sample_group:condition
-)
-
-# --------------------------
-# Filter low-count genes
-# --------------------------
-dds_paired <- dds_paired[rowSums(counts(dds_paired)) > MIN_COUNTS_FILTER, ]
-
-# --------------------------
-# Run DESeq2
-# --------------------------
-dds_paired <- DESeq(dds_paired)
-
-
-res_WT_vs_M1 <- results(dds_paired, name = "sample_groupWT.conditionIP")
-res_M12_vs_M1 <- results(dds_paired, name = "sample_groupM12.conditionIP")
-res_WT_vs_M12 <- results(dds_paired, contrast = list(
-  "sample_groupWT.conditionIP",
-  "sample_groupM12.conditionIP"
-))
-
-
-res_WT_vs_M1_sig  <- res_WT_vs_M1[which(res_WT_vs_M1$padj  < PADJ_THRESHOLD), ]
-res_WT_vs_M12_sig <- res_WT_vs_M12[which(res_WT_vs_M12$padj < PADJ_THRESHOLD), ]
-res_M12_vs_M1_sig <- res_M12_vs_M1[which(res_M12_vs_M1$padj < PADJ_THRESHOLD), ]
-
-# --------------------------
 # Save results
 # --------------------------
 dir.create(OUTPUT_DIR, showWarnings = FALSE, recursive = TRUE)
 
 # Core objects for downstream modules
 saveRDS(dds,           file = file.path(OUTPUT_DIR, "dds.rds"))
-saveRDS(dds_paired,    file = file.path(OUTPUT_DIR, "dds_paired.rds"))
 saveRDS(colData,       file = file.path(OUTPUT_DIR, "colData.rds"))
-saveRDS(counts_merged, file = file.path(OUTPUT_DIR, "counts_merged.rds"))
 
 # IP vs IN per sample
 saveRDS(res_M1_sig,  file = file.path(OUTPUT_DIR, "DESeq2_res_M1_sig.rds"))
@@ -148,13 +113,5 @@ write.csv(as.data.frame(res_M1_sig),  file = file.path(OUTPUT_DIR, "DESeq2_res_M
 write.csv(as.data.frame(res_M12_sig), file = file.path(OUTPUT_DIR, "DESeq2_res_M12_sig.csv"))
 write.csv(as.data.frame(res_WT_sig),  file = file.path(OUTPUT_DIR, "DESeq2_res_WT_sig.csv"))
 
-# Differences between groups
-saveRDS(res_WT_vs_M1_sig,  file = file.path(OUTPUT_DIR, "DESeq2_res_WT_vs_M1_sig.rds"))
-saveRDS(res_WT_vs_M12_sig, file = file.path(OUTPUT_DIR, "DESeq2_res_WT_vs_M12_sig.rds"))
-saveRDS(res_M12_vs_M1_sig, file = file.path(OUTPUT_DIR, "DESeq2_res_M12_vs_M1_sig.rds"))
-
-write.csv(as.data.frame(res_WT_vs_M1_sig),  file = file.path(OUTPUT_DIR, "DESeq2_res_WT_vs_M1_sig.csv"))
-write.csv(as.data.frame(res_WT_vs_M12_sig), file = file.path(OUTPUT_DIR, "DESeq2_res_WT_vs_M12_sig.csv"))
-write.csv(as.data.frame(res_M12_vs_M1_sig), file = file.path(OUTPUT_DIR, "DESeq2_res_M12_vs_M1_sig.csv"))
 
 cat("DESeq2 analysis completed. Significant results saved in:", OUTPUT_DIR, "\n")
